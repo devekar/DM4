@@ -11,7 +11,7 @@ class DBSCAN:
     EPSILON = None
     MINPTS = None
     clusters = [[None]]
-
+    magnitudes = None
 
     # Initialize global variables
     def __init__(self, data, EPSILON, MINPTS):
@@ -20,8 +20,16 @@ class DBSCAN:
         self.dataset = data["matrix"]
         self.EPSILON = EPSILON
         self.MINPTS = MINPTS
+        self.magnitudes = [None]*len(self.dataset)
+
+        self.computeMagnitudes()
         self.runDBSCAN()
         
+
+    def computeMagnitudes(self):
+        for idx, i in enumerate(self.dataset):
+            self.magnitudes[idx] = self.magnitude(i[1:len(self.word_list)+1])
+
 
     # Compute magnitude of a vector
     def magnitude(self, vector):
@@ -33,27 +41,25 @@ class DBSCAN:
 
 
     # Compute cosine distance between two numeric vectors
-    def cosine_dist(self, vector1, vector2):
-        assert (len(vector1) == len(vector2)), \
-            "Lengths of two vectors should be same"
+    def cosine_dist(self, P1, P2):
         dot_product = 0;
+        vector1 = self.dataset[P1][1:len(self.word_list) + 1]
+        vector2 = self.dataset[P2][1:len(self.word_list) + 1]
         for i1, i2 in itertools.izip(vector1, vector2):
             dot_product += i1 * i2;
         mag1 = 1
         mag2 = 1
         if dot_product > 0:
-            mag1 = self.magnitude(vector1);
-            mag2 = self.magnitude(vector2);
+            mag1 = self.magnitudes[P1];
+            mag2 = self.magnitudes[P2];
         cosine_sim = dot_product / (mag1 * mag2)
         cosine_dist = 1 - cosine_sim 
         return cosine_dist
 
-
+    # TODO: UNUSED CODE
     # Get distance between two instances
-    def get_dist(self, inst1, inst2):
-        vector1 = inst1[1:len(self.word_list)+1]
-        vector2 = inst2[1:len(self.word_list)+1]
-        return self.cosine_dist(vector1, vector2)
+    def get_dist(self, P1, P2):
+        return self.cosine_dist(P1, P2)
 
 
     def runDBSCAN(self):
@@ -100,7 +106,7 @@ class DBSCAN:
     def regionQuery(self, P):
         NeighborPts = []
         for i in range(len(self.dataset)):
-            if self.get_dist(self.dataset[i], self.dataset[P]) < self.EPSILON:
+            if self.cosine_dist(i, P) < self.EPSILON:
                 NeighborPts.append(i)
         return NeighborPts
 

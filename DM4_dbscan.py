@@ -30,8 +30,8 @@ def parseDM(filepath = r'data_matrix.csv'):
 
 dataMatrix = parseDM()
 
-EPSILON = sys.argv[1]
-MINPTS = sys.argv[2]
+EPSILON = float(sys.argv[1])
+MINPTS = int(sys.argv[2])
 
 time = -timeit.default_timer()
 d = DBSCAN(dataMatrix, EPSILON, MINPTS)
