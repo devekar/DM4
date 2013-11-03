@@ -28,12 +28,11 @@ def parseDM(filepath = r'data_matrix.csv'):
 
 
 dataMatrix = parseDM()
-print len(dataMatrix['matrix'])
 
-EPSILON = 10
-MINPTS = 5
+EPSILON = 0.1
+MINPTS = 3
 
 time = -timeit.default_timer()
 d = DBSCAN(dataMatrix, EPSILON, MINPTS)
 time += timeit.default_timer()
-print "Time to cluster: ", str(time)
+print "\nTime to cluster: ", str(time)

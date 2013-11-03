@@ -1,11 +1,16 @@
 from __future__ import division
+from collections import defaultdict
+import itertools
+import math
+import sys
 
 class DBSCAN:
-    word_list = []
-    topic_list = []
-    dataset = []
-    EPSILON = 0
-    MINPTS = 0
+    word_list = None
+    topic_list = None
+    dataset = None
+    EPSILON = None
+    MINPTS = None
+    clusters = [[None]]
 
 
     # Initialize global variables
@@ -54,34 +59,48 @@ class DBSCAN:
     def runDBSCAN(self):
         C = 0
         for i in range(len(self.dataset)):
-            if isinstance(self.dataset[i][0], int): continue
-            self.dataset[i][0] = 0
-      
+            if isinstance(self.dataset[i][0], int): continue  # Univisted points have string "Article #" in this field
+            self.dataset[i][0] = 0 # Mark as visited      
             NeighborPts = self.regionQuery(i)
+
             if len(NeighborPts) < self.MINPTS:
-                self.dataset[i][0] = -1
+                self.dataset[i][0] = -1 # Mark as noise
             else:
-                C += 1
+                C += 1   # next cluster
                 print C, i
                 self.expandCluster(i, NeighborPts, C)
+
+        # Display clusters
+        for idx, i in enumerate(self.clusters):
+            print idx,"- " , len(i), ": ", i
+
+        # Display Noise
+        sys.stdout.write("Noise: ")
+        for idx, i in enumerate(self.dataset):
+            if i[0]==-1:
+                sys.stdout.write(str(idx) + " ")
+        sys.stdout.write("\n")
                 
-          
+              
     def expandCluster(self, P, NeighborPts, C):
         self.dataset[P][0] = C
         for i in NeighborPts:
-            if not isinstance(self.dataset[i][0], int):
+            if not isinstance(self.dataset[i][0], int): # An unvisited point
                 self.dataset[i][0] = 0
                 NeighborPts_i = self.regionQuery(i)
                 if len(NeighborPts_i) >= self.MINPTS:
                     NeighborPts.extend(NeighborPts_i)
-            if not self.dataset[i][0] > 0:
+            if not self.dataset[i][0] > 0:   # An unclustered point(can be noise)
                 self.dataset[i][0] = C
+
+        self.clusters.append(NeighborPts) # keep record of this cluster
       
-      
+    
+    # Return points in its EPSILON neighborhood
     def regionQuery(self, P):
         NeighborPts = []
-        for i in self.dataset:
-            if self.get_dist(i, self.dataset[P]) < self.EPSILON:
-                NeighborPts += i
+        for i in range(len(self.dataset)):
+            if self.get_dist(self.dataset[i], self.dataset[P]) < self.EPSILON:
+                NeighborPts.append(i)
         return NeighborPts
 
