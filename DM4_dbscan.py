@@ -1,6 +1,7 @@
 from dbscan import DBSCAN
 import csv
 import timeit
+import sys
 
 def parseDM(filepath = r'data_matrix.csv'):
     dataMatrix = []
@@ -29,10 +30,12 @@ def parseDM(filepath = r'data_matrix.csv'):
 
 dataMatrix = parseDM()
 
-EPSILON = 0.1
-MINPTS = 3
+EPSILON = sys.argv[1]
+MINPTS = sys.argv[2]
 
 time = -timeit.default_timer()
 d = DBSCAN(dataMatrix, EPSILON, MINPTS)
 time += timeit.default_timer()
 print "\nTime to cluster: ", str(time)
+print "EPSILON= " + str(EPSILON) 
+print "MINPTS= " + str(MINPTS)
