@@ -73,7 +73,7 @@ class DBSCAN:
     def runDBSCAN(self):
         C = 0
         print "Cluster# Datapoint#"
-        for i in range(len(self.dataset[:100])):
+        for i in range(len(self.dataset)):
             if isinstance(self.dataset[i][0], int): continue  # Univisted points have string "Article #" in this field
             self.dataset[i][0] = 0 # Mark as visited      
             NeighborPts = self.regionQuery(i)

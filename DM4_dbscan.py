@@ -1,4 +1,4 @@
-from dbscan import DBSCAN
+from dbscan1 import DBSCAN
 import csv
 import timeit
 import sys
