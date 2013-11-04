@@ -28,14 +28,20 @@ def parseDM(filepath = r'data_matrix.csv'):
     return {"topic_list":topic_list, "word_list": word_list, "matrix": matrix}
 
 
+
+########
+# MAIN #
+########
+
+time = -timeit.default_timer()
+time1 = time
 dataMatrix = parseDM()
+time += timeit.default_timer()
+print "\nTime to read: ", str(time)
 
 EPSILON = float(sys.argv[1])
 MINPTS = int(sys.argv[2])
 
-time = -timeit.default_timer()
 d = DBSCAN(dataMatrix, EPSILON, MINPTS)
-time += timeit.default_timer()
-print "\nTime to cluster: ", str(time)
-print "EPSILON= " + str(EPSILON) 
-print "MINPTS= " + str(MINPTS)
+time1 += timeit.default_timer()
+print "Total time: ", str(time1)

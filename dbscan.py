@@ -3,6 +3,7 @@ from collections import defaultdict
 import itertools
 import math
 import sys
+import timeit
 
 class DBSCAN:
     word_list = None
@@ -22,9 +23,16 @@ class DBSCAN:
         self.MINPTS = MINPTS
         self.magnitudes = [None]*len(self.dataset)
 
+        time1 = timeit.default_timer()
         self.computeMagnitudes()
+        time2 = timeit.default_timer()
+        print "Magnitudes computed in time: ", str(time2 - time1)
         self.runDBSCAN()
-        
+        time3 = timeit.default_timer()
+        print "Time to cluster: ", str(time3 - time2)
+        print "EPSILON= " + str(EPSILON) 
+        print "MINPTS= " + str(MINPTS)
+
 
     def computeMagnitudes(self):
         for idx, i in enumerate(self.dataset):
@@ -64,6 +72,7 @@ class DBSCAN:
 
     def runDBSCAN(self):
         C = 0
+        print "Cluster# Datapoint#"
         for i in range(len(self.dataset)):
             if isinstance(self.dataset[i][0], int): continue  # Univisted points have string "Article #" in this field
             self.dataset[i][0] = 0 # Mark as visited      
@@ -73,21 +82,21 @@ class DBSCAN:
                 self.dataset[i][0] = -1 # Mark as noise
             else:
                 C += 1   # next cluster
-                print C, i
+                print C, i   #print current cluster and row/point to be expanded
                 self.expandCluster(i, NeighborPts, C)
 
         # Display clusters
         for idx, i in enumerate(self.clusters):
-            print idx,"- " , len(i), ": ", i
+            print idx,"- " , len(i)#, ": ", i
 
         # Display Noise
-        sys.stdout.write("Noise: ")
+        sys.stdout.write("Noise: "); noiseCnt = 0
         for idx, i in enumerate(self.dataset):
-            if i[0]==-1:
-                sys.stdout.write(str(idx) + " ")
-        sys.stdout.write("\n")
+            if i[0]==-1: noiseCnt += 1
+                #sys.stdout.write(str(idx) + " ")
+        sys.stdout.write(str(noiseCnt) + "\n")
                 
-              
+
     def expandCluster(self, P, NeighborPts, C):
         self.dataset[P][0] = C
         for i in NeighborPts:
@@ -95,7 +104,8 @@ class DBSCAN:
                 self.dataset[i][0] = 0
                 NeighborPts_i = self.regionQuery(i)
                 if len(NeighborPts_i) >= self.MINPTS:
-                    NeighborPts.extend(NeighborPts_i)
+                    l = temp3 = [x for x in NeighborPts_i if x not in NeighborPts]
+                    NeighborPts.extend(l)
             if not self.dataset[i][0] > 0:   # An unclustered point(can be noise)
                 self.dataset[i][0] = C
 
