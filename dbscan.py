@@ -73,7 +73,7 @@ class DBSCAN:
     def runDBSCAN(self):
         C = 0
         print "Cluster# Datapoint#"
-        for i in range(len(self.dataset)):
+        for i in range(len(self.dataset[:100])):
             if isinstance(self.dataset[i][0], int): continue  # Univisted points have string "Article #" in this field
             self.dataset[i][0] = 0 # Mark as visited      
             NeighborPts = self.regionQuery(i)
@@ -104,7 +104,7 @@ class DBSCAN:
                 self.dataset[i][0] = 0
                 NeighborPts_i = self.regionQuery(i)
                 if len(NeighborPts_i) >= self.MINPTS:
-                    l = temp3 = [x for x in NeighborPts_i if x not in NeighborPts]
+                    l = [x for x in NeighborPts_i if x not in NeighborPts]
                     NeighborPts.extend(l)
             if not self.dataset[i][0] > 0:   # An unclustered point(can be noise)
                 self.dataset[i][0] = C
