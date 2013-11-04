@@ -1,0 +1,16 @@
+
+Time to read:  17.4132461548
+Magnitudes computed in time:  2.11706209183
+Cluster# Datapoint#
+1 13
+2 52
+3 71
+0 -  1
+1 -  790
+2 -  6
+3 -  34
+Noise: 90
+Time to cluster:  3339.9179461
+EPSILON= 0.1
+MINPTS= 5
+Total time:  3359.44885612
