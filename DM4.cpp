@@ -44,14 +44,14 @@ int* parse()
 		for(int j=0; j<cols; j++)
 			iss>>dataset[i*cols + j];
 		i++;
-        if(i==rows) break;
 	}
+	
 	cout<<i<<" "<<rows<<" "<<cols<<endl;
 	infile.close();
 }
 
 
-float getMagnitude(int row)
+inline float getMagnitude(int row)
 {
 	float sum=0;
 	for(int j=0; j<cols; j++)
@@ -61,24 +61,27 @@ float getMagnitude(int row)
 
 void computeMagnitudes()
 {
-	for(int i=0;i < rows; i++)
+	for(int i=0;i < rows; i++) {
         magnitudes[i] = getMagnitude(i);
+	}
 }
 
-float getCosineDist(int P1, int P2)
+inline float getCosineDist(int P1, int P2)
 {
   float dotprod = 0;
   for(int j=0; j<cols; j++)
     dotprod += dataset[P1*cols + j]*dataset[P2*cols + j];
-  if(dotprod==0) return 1;
-  return 1 - dotprod/(magnitudes[P1]*magnitudes[P2]);
+	
+  return (1 - dotprod/(magnitudes[P1]*magnitudes[P2]));
 }
 
 void computeDistances()
 {
-  int j, idx=0;
+  int j, idx=0; 
   for(int i=0; i< rows; i++){
-    for(j=0;j<i;j++) matrix[idx++]=getCosineDist(i, j);
+    for(j=0; j<i; j++) {
+	   matrix[idx++]=getCosineDist(i, j);
+	}
   }
   cout<<"Computed distances: "<<idx<<endl;
 }
@@ -116,9 +119,9 @@ void expandCluster(int P, vector<int> NeighborPts, int C)
  status[P] = C;
  for(int it=0; it< NeighborPts.size(); it++)
  {
-    if(!status[it]) {
+    if(status[it]==0) {
         status[it] = -1;
-        vector<int> NeighborPts_t = regionQuery(it);
+        vector<int> NeighborPts_t = regionQuery(NeighborPts[it]);
         if(NeighborPts_t.size() >= MINPTS) {
             vector<int> temp = removeDuplicates(NeighborPts_t, NeighborPts);
             NeighborPts.insert(NeighborPts.end(), temp.begin(), temp.end());
@@ -136,13 +139,12 @@ void runDBSCAN()
 
  for(int i=0;i<rows;i++)
  {
-    if(status[i]) continue;
+    if(status[i]!=0) continue;
     status[i]=-1;
     vector<int> NeighborsPts = regionQuery(i);
     if(NeighborsPts.size() < MINPTS) status[i]=-2;
     else {
         C++;
-        if(C%5==0) cout<<C<<endl;
         expandCluster(i, NeighborsPts, C);
     }
  }
@@ -193,7 +195,7 @@ int main(int argc, char* argv[])
     clock_t t5 = clock();
     elapsed = double(t5-t4) / CLOCKS_PER_SEC;
     cout<<"DBSCAN: "<<elapsed<<endl;
-
     computeClusters();
+	
 	return 0;
 }
