@@ -6,19 +6,25 @@
 #include<stdlib.h>
 #include<vector>
 #include<map>
+#include<list>
 #include<algorithm>
 #include<math.h>
 #include<ctime>
 
+#define MAX_DIST 2
+
 using namespace std;
+list<vector<int> > clusterList;
+
 
 int MINPTS;
 float EPSILON;
 char FILENAME[] = "CPPmatrix.txt";
 int rows, cols;
-int *dataset= NULL;
+int *datavector= NULL;
 float *magnitudes = NULL;
 float *matrix = NULL;
+float *matrix1 = NULL;
 int *status=NULL;
 
 int* parse()
@@ -31,18 +37,20 @@ int* parse()
 	getline(infile, line);
 	cols = atoi(line.c_str());
 	
-	dataset = new int[rows*cols];
+	datavector = new int[rows*cols];
     status = new int[rows];
 	magnitudes = new float[rows];
 	matrix = new float[(rows*(rows-1))/2];
-	if(!dataset || !status || !magnitudes || !matrix) cout<<"Error"<<endl;
+	if(!datavector || !status || !magnitudes || !matrix) cout<<"Error"<<endl;
 		
+	for(int i=0;i<rows;i++) status[i]=0;
+	 
 	int i = 0;
 	while(getline(infile, line))
 	{
 		stringstream iss(line);
 		for(int j=0; j<cols; j++)
-			iss>>dataset[i*cols + j];
+			iss>>datavector[i*cols + j];
 		i++;
 	}
 	
@@ -55,7 +63,7 @@ inline float getMagnitude(int row)
 {
 	float sum=0;
 	for(int j=0; j<cols; j++)
-		sum += dataset[row*cols + j] * dataset[row*cols + j];
+		sum += datavector[row*cols + j] * datavector[row*cols + j];
 	return sqrt(sum);
 }
 
@@ -70,9 +78,39 @@ inline float getCosineDist(int P1, int P2)
 {
   float dotprod = 0;
   for(int j=0; j<cols; j++)
-    dotprod += dataset[P1*cols + j]*dataset[P2*cols + j];
+    dotprod += datavector[P1*cols + j]*datavector[P2*cols + j];
 	
   return (1 - dotprod/(magnitudes[P1]*magnitudes[P2]));
+}
+
+
+void write_binary(int idx)
+{
+FILE *f =fopen("binmat.txt","wb");
+int ok = fwrite(matrix, sizeof(float),idx, f);
+fclose(f);
+if(ok==idx) cout<<"Success binary write\n";
+
+matrix1 = new float[idx];
+f = fopen("binmat.txt","rb");
+ok = fread(matrix1, sizeof(float),idx, f);
+fclose(f);
+if(ok==idx) cout<<"Success binary read\n";
+
+int i;
+for(i=0;i<idx;i++)
+if(matrix[i]!=matrix[i]) break;
+
+if(i==idx) cout<<"Same copy\n";
+}
+
+
+void parseBinMatrix(int idx)
+{
+FILE* f = fopen("binmat.txt","rb");
+int ok = fread(matrix, sizeof(float),idx, f);
+fclose(f);
+if(ok==idx) cout<<"Success binary read\n";
 }
 
 void computeDistances()
@@ -84,8 +122,9 @@ void computeDistances()
 	}
   }
   cout<<"Computed distances: "<<idx<<endl;
-}
 
+  write_binary(idx);
+}
 
 float getDistance(int P1, int P2)
 {
@@ -95,77 +134,109 @@ float getDistance(int P1, int P2)
 }
 
 
-vector<int> regionQuery(int P)
+
+
+/*
+HIERARCHICAL
+*/
+// P1 is larger than P2
+void find_min_distance(int *points)
 {
- vector<int> NeighborPts;
- for(int i=0;i<rows;i++)
-    if(getDistance(i, P) < EPSILON) NeighborPts.push_back(i);
- return NeighborPts;
+ int i,j, idx=0;
+ float min_t = MAX_DIST;
+ for(i=0;i<rows;i++)
+   for(j=0;j<i;j++, idx++)
+     if(matrix[idx] < min_t) {
+		min_t=matrix[idx];
+		points[0] = i; points[1]=j;
+	}
 }
 
-vector<int> removeDuplicates(vector<int> NeighborPts_t, vector<int> NeighborPts)
-{
- vector<int> temp;
- for(int it = 0; it < NeighborPts_t.size(); it++)
-    if(std::find(NeighborPts.begin(), NeighborPts.end(), NeighborPts_t[it])==NeighborPts.end()) 
-        temp.push_back(NeighborPts_t[it]);
 
- return temp;
+void setDistance(int P1, int P2, float dist)
+{
+  if(P1==P2) return;
+  else if(P1>P2) matrix[(P1*(P1-1))/2 + P2] = dist;
+  else matrix[(P2*(P2-1))/2 + P1] = dist;
+}
+
+void updateList(int P1, int P2)
+{
+  list<vector<int> >::iterator P1_it;
+  list<vector<int> >::iterator P2_it;
+  for(list<vector<int> >::iterator listit=clusterList.begin(); listit != clusterList.end(); listit++) {
+     vector<int> v = *(listit);
+	 if(find(v.begin(), v.end(), P1)!=v.end()) P1_it = listit;
+	 if(find(v.begin(), v.end(), P2)!=v.end()) P2_it = listit;
+  }
+  
+  (*P2_it).insert( (*P2_it).end(), (*P1_it).begin(), (*P1_it).end() );
+  clusterList.erase(P1_it);
+}
+
+// P1 is larger than P2
+// Keep the link's min/max distances in P2 
+void updateMatrixAndStatus(int *points)
+{
+  int P1 = points[0], P2=points[1];
+  float new_dist;
+  for(int i=0; i<rows; i++) {
+    new_dist = max( getDistance(i, P1), getDistance(i, P2) );  //choose min/max link
+	setDistance(i, P2, new_dist);
+  }
+  
+  //hide P1's distances
+  for(int i=0;i <rows; i++)
+    setDistance(i, P1, MAX_DIST);
+	
+  updateList(P1, P2);
 }
 
 
-void expandCluster(int P, vector<int> NeighborPts, int C)
+void constructListOfvectors()
 {
- status[P] = C;
- for(int it=0; it< NeighborPts.size(); it++)
- {
-    if(status[it]==0) {
-        status[it] = -1;
-        vector<int> NeighborPts_t = regionQuery(NeighborPts[it]);
-        if(NeighborPts_t.size() >= MINPTS) {
-            vector<int> temp = removeDuplicates(NeighborPts_t, NeighborPts);
-            NeighborPts.insert(NeighborPts.end(), temp.begin(), temp.end());
-        }
-    }
-    if(status[it]<1) status[it] = C;
+ for(int i=0; i <rows; i++) {
+	vector<int> t;
+	t.push_back(i);
+    clusterList.push_back(t);
  }
 }
 
-
-void runDBSCAN()
+void computeHierarchicalCluster()
 {
- int C=0;
- for(int i=0;i<rows;i++) status[i]=0;
-
- for(int i=0;i<rows;i++)
- {
-    if(status[i]!=0) continue;
-    status[i]=-1;
-    vector<int> NeighborsPts = regionQuery(i);
-    if(NeighborsPts.size() < MINPTS) status[i]=-2;
-    else {
-        C++;
-        expandCluster(i, NeighborsPts, C);
-    }
- }
-
+	int c=0;
+	for(list<vector<int> >::iterator listit=clusterList.begin(); listit != clusterList.end(); listit++) {
+		cout<<c<<" "<<(*listit).size()<<endl;
+		c++;
+	}
 }
 
-void computeClusters()
-{
-    map<int, int> clusters;
-    for(int i=0;i<rows;i++)
-    {
-     clusters[status[i]]++;
-    }
 
-    for(map<int,int>::iterator it=clusters.begin(); it != clusters.end(); it++)
-      cout<<it->first<<" "<<it->second<<endl;
+void hierarchical(int C)
+{
+constructListOfvectors();
+
+ if(C<2) {
+	cout<<"Wrong cluster size\n";
+	return;
+ }
+ int currentC = rows;
+ int *points=new int[2];
+ while(1) {
+	find_min_distance(points);
+	updateMatrixAndStatus(points);
+	currentC--;
+	if(currentC==C) break;
+	if(currentC%50==0) cout<<currentC<<" ";
+ }
+ cout<<endl;
+ computeHierarchicalCluster();
 }
 
 
 int main(int argc, char* argv[])
 {
+	/*
     if(argc<3) {
         cout<<"Incorrect Args\n";
         exit(1);
@@ -173,10 +244,12 @@ int main(int argc, char* argv[])
     EPSILON = atof(argv[1]);
     MINPTS = atoi(argv[2]);
     cout<<EPSILON<<" "<<MINPTS<<endl;
-    
+    */
+	int rows1 = atoi(argv[1]);
     clock_t t1 = clock();
 
 	parse();
+	parseBinMatrix((rows*(rows-1))/2);
     clock_t t2 = clock();
     double elapsed = double(t2-t1) / CLOCKS_PER_SEC;
     cout<<"Parse: "<<elapsed<<endl;
@@ -191,11 +264,13 @@ int main(int argc, char* argv[])
     elapsed = double(t4-t3) / CLOCKS_PER_SEC;
     cout<<"Distances: "<<elapsed<<endl;
 
-    runDBSCAN();
+	write_binary((rows*(rows-1))/2);
+//	rows = rows1;
+//	hierarchical(64);
     clock_t t5 = clock();
     elapsed = double(t5-t4) / CLOCKS_PER_SEC;
-    cout<<"DBSCAN: "<<elapsed<<endl;
-    computeClusters();
-	
+    cout<<"Algo: "<<elapsed<<endl;
+    //computeClusters();
+
 	return 0;
 }
