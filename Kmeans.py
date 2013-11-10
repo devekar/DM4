@@ -12,27 +12,30 @@ import random
 import copy
 
 class KMeans(object):
-    K = 4
+    K = None
+    dist_type = None
     word_list = None
     topic_list = None
     place_list = None
     dataset = None
     magnitudes = None
-    clusters = []
-    cluster_means = []
+    clusters = None
+    cluster_means = None
     epsilon = 0.00001
 
-    def __init__(self, k, data):
+    def __init__(self, k, d, data):
         self.K = k
+        self.dist_type = d
         self.word_list = data["word_list"]
         self.topic_list = data["topic_list"]
         self.place_list = data["place_list"]
         self.dataset = data["matrix"]
-        self.magnitudes = [None]*len(self.dataset)
-        time1 = timeit.default_timer()
-        self.computeMagnitudes()
-        time2 = timeit.default_timer()
-        print "Magnitudes computed in time: ", str(time2 - time1)
+        if self.dist_type == 0:
+            self.magnitudes = [None]*len(self.dataset)
+            time1 = timeit.default_timer()
+            self.computeMagnitudes()
+            time2 = timeit.default_timer()
+            print "Magnitudes computed in time: ", str(time2 - time1)
         
         
     def computeMagnitudes(self):
@@ -124,7 +127,10 @@ class KMeans(object):
             for idx,point in enumerate(self.dataset):
                 distances = []
                 for k in xrange(self.K):
-                    distances.append(self.cosine_dist(idx, k))
+                    if self.dist_type == 0:
+                        distances.append(self.cosine_dist(idx, k))
+                    else:
+                        distances.append(self.euclidean_dist(idx, k))
                 closest_cluster = distances.index(min(distances))
                 self.clusters[closest_cluster].append(point)
             print [len(a) for a in self.clusters]
@@ -134,7 +140,10 @@ class KMeans(object):
                 self.cluster_means[k] = self.get_mean_vector(self.clusters[k])
                 #print "Mean " + str(k) + ": " + str(self.cluster_means[k])
             '''Check if means changed significantly'''
-            diff = [self.cosine_dist_means(new, old) for new,old in zip(self.cluster_means, old_cluster_means)]
+            if self.dist_type == 0:
+                diff = [self.cosine_dist_means(new, old) for new,old in zip(self.cluster_means, old_cluster_means)]
+            else:
+                diff = [self.euclidean_dist_means(new, old) for new,old in zip(self.cluster_means, old_cluster_means)]
             print "diff = " + str(diff)
             if sum(diff) <= self.epsilon:
                 print "Converged in " + str(i+1) + " iterations"

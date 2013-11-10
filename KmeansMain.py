@@ -37,5 +37,6 @@ def parseDM(filepath = r'data_matrix.csv'):
 
 data = parseDM()
 clusters = int(sys.argv[1])
-kmeans = KMeans(clusters, data)
+dist_type = int(sys.argv[2])
+kmeans = KMeans(clusters, dist_type, data)
 kmeans.get_clusters()
