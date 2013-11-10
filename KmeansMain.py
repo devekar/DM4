@@ -4,6 +4,7 @@ Created on Nov 4, 2013
 @author: Akshay
 '''
 import csv
+import sys
 from Kmeans import KMeans
 
 def parseDM(filepath = r'data_matrix.csv'):
@@ -35,5 +36,6 @@ def parseDM(filepath = r'data_matrix.csv'):
 
 
 data = parseDM()
-kmeans = KMeans(2, data)
+clusters = int(sys.argv[1])
+kmeans = KMeans(clusters, data)
 kmeans.get_clusters()
