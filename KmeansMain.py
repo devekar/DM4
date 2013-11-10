@@ -12,6 +12,7 @@ def parseDM(filepath = r'data_matrix.csv'):
     matrix = []
     word_list = []
     topic_list = []
+    place_list = []
     with open(filepath, 'rb') as csv_file:
         reader = csv.reader(csv_file, delimiter=',', quotechar='"')
         for row in reader:
@@ -22,15 +23,17 @@ def parseDM(filepath = r'data_matrix.csv'):
             word_list.append(item)
         elif "t_" in item:
             topic_list.append(item[2:])
+        elif "p_" in item:
+            place_list.append(item[2:])
 
     word_list = word_list[1:] # Remove 'Article #'
     words_topics_size = len(topic_list) + len(word_list)
 
     for row in dataMatrix[2:]:
-        matrix.append( [row[0]] + map(int, row[1:1 + words_topics_size]) )
-    return {"topic_list":topic_list, "word_list": word_list, "matrix": matrix}
+        matrix.append( [row[0]] + map(int, row[1:]) )
+    return {"topic_list":topic_list, "word_list": word_list, "place_list":place_list, "matrix": matrix}
 
 
 data = parseDM()
-kmeans = KMeans(3, data)
+kmeans = KMeans(2, data)
 kmeans.get_clusters()

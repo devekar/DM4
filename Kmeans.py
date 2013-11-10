@@ -12,9 +12,10 @@ import random
 import copy
 
 class KMeans(object):
-    K = 2
+    K = 4
     word_list = None
     topic_list = None
+    place_list = None
     dataset = None
     magnitudes = None
     clusters = []
@@ -25,6 +26,7 @@ class KMeans(object):
         self.K = k
         self.word_list = data["word_list"]
         self.topic_list = data["topic_list"]
+        self.place_list = data["place_list"]
         self.dataset = data["matrix"]
         self.magnitudes = [None]*len(self.dataset)
         time1 = timeit.default_timer()
@@ -77,6 +79,18 @@ class KMeans(object):
         cosine_dist = 1 - cosine_sim 
         return cosine_dist
     
+    
+    '''Compute Euclidean distance between two numeric vectors'''
+    def euclidean_dist(self, record_idx, cluster_idx):
+        vec1 = self.dataset[record_idx][1:len(self.word_list) + 1]
+        vec2 = self.cluster_means[cluster_idx]
+        return math.sqrt(sum([(abs(a-b))**2 for a,b in zip(vec1,vec2)]))
+    
+    
+    def euclidean_dist_means(self, vec1, vec2):
+        return math.sqrt(sum([(abs(a-b))**2 for a,b in zip(vec1,vec2)]))
+    
+    
     def get_mean(self, vector):
         return sum(vector) / len(vector)
     
@@ -126,4 +140,29 @@ class KMeans(object):
                 print "Converged in " + str(i+1) + " iterations"
                 break
         kmeans_stop = timeit.default_timer()
-        print "K-means converged in time: " + str(kmeans_stop - kmeans_start) + " seconds"
+        print "K-means converged in time: " + str(kmeans_stop - kmeans_start) + " seconds or " + str((kmeans_stop - kmeans_start) / 60) + " minutes"
+        self.entropy()
+        
+        
+        '''compute entropy'''
+    def entropy(self):
+        topic_start = len(self.word_list) + 1
+        topic_end = topic_start + len(self.topic_list)
+        place_start = topic_end
+        place_end = place_start + len(self.place_list)
+        cluster_entropies = [[0 for i in xrange(place_end-topic_start)] for j in xrange(self.K)]
+        cluster_labeled_sizes = []
+        for k in xrange(self.K):
+            for point in self.clusters[k]:
+                vec = copy.copy(point[topic_start:place_end])
+                if sum(vec) > 0:
+                    vec = [a/sum(vec) for a in vec]
+                    cluster_entropies[k] = [a+b for a,b in zip(cluster_entropies[k], vec)]
+            cluster_labeled_sizes.append(sum(cluster_entropies[k]))
+            cluster_entropies[k] = [a/sum(cluster_entropies[k]) for a in cluster_entropies[k]]
+            cluster_entropies[k] = [(-1)*p*(math.log(p,2)) if p>0 else 0 for p in cluster_entropies[k]]
+            cluster_entropies[k] = sum(cluster_entropies[k])
+        cluster_weights = [a/sum(cluster_labeled_sizes) for a in cluster_labeled_sizes]
+        entropy = sum([a*b for a,b in zip(cluster_weights, cluster_entropies)])
+        print "Entropy = " + str(entropy)
+                
