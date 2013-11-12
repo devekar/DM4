@@ -9,11 +9,11 @@ Data Mining - Assignment 4
 
 Executing the program
 ---------------------
-1) Run command "make copy" to copy the vectors and reuters from ~/home/8/devekar/WWW/DM2
+1) Run command "make copy" to copy the vectors and reuters from ~/home/7/nikam/WWW/
 2) Run command "make run_kmeans" to run the K-means clustering program for 4 clusters with cosine metric.
    OR
    Run command "make run_maxlink" to run the Max-Link clustering program with cosine metric.
-4) Run command "make clean" to remove output files.
+3) Run command "make clean" to remove output files.
 
 
 

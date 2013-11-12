@@ -1,5 +1,5 @@
 copy:
-	cp /home/8/devekar/WWW/DM2/data_matrix.csv ./
+	cp /home/7/nikam/WWW/data_matrix.csv ./
 
 run_kmeans:
 	python KmeansMain.py 4 0
