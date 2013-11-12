@@ -1,6 +1,7 @@
+from __future__ import division
 import csv
 import math
-
+import sys
 
 
 def get_mean(vector):
@@ -14,8 +15,9 @@ def std_dev(l):
 	return math.sqrt(sd / len(l))
 
 
+filename = sys.argv[1]
 cluster_sizes = []
-f = open("cluster_sizes_1.txt", 'rb')
+f = open(filename, 'rb')
 reader = csv.reader(f, delimiter=',')
 for row in reader:
 	cluster_sizes.append(map(int, row))
@@ -23,5 +25,5 @@ for row in reader:
 for item in cluster_sizes:
 	mean = get_mean(item)
 	sd = std_dev(item)
-	print mean, sd
+	print len(item), mean, sd
 
