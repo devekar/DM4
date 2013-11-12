@@ -19,15 +19,15 @@ list<vector<int> > clusterList;
 
 int MINPTS;
 float EPSILON;
-char FILENAME[] = "CPPmatrix.txt";
-int rows, cols;
-int *datavector= NULL;
+char FILENAME[] = "CPPmatrix1.txt";
+int rows, cols, word_size, topic_size;
+int *dataset= NULL;
 float *magnitudes = NULL;
 float *matrix = NULL;
 float *matrix1 = NULL;
 int *status=NULL;
 
-int* parse()
+void parse()
 {
 	string line;
 	ifstream infile(FILENAME);
@@ -35,13 +35,16 @@ int* parse()
 	rows = atoi(line.c_str());
 	
 	getline(infile, line);
-	cols = atoi(line.c_str());
+	word_size = cols = atoi(line.c_str());
 	
-	datavector = new int[rows*cols];
+	getline(infile, line);
+	topic_size = atoi(line.c_str());
+	
+	dataset = new int[rows*cols];
     status = new int[rows];
 	magnitudes = new float[rows];
 	matrix = new float[(rows*(rows-1))/2];
-	if(!datavector || !status || !magnitudes || !matrix) cout<<"Error"<<endl;
+	if(!dataset || !status || !magnitudes || !matrix) cout<<"Error"<<endl;
 		
 	for(int i=0;i<rows;i++) status[i]=0;
 	 
@@ -50,8 +53,9 @@ int* parse()
 	{
 		stringstream iss(line);
 		for(int j=0; j<cols; j++)
-			iss>>datavector[i*cols + j];
+			iss>>dataset[i*cols + j];
 		i++;
+		if(i==rows) break;
 	}
 	
 	cout<<i<<" "<<rows<<" "<<cols<<endl;
@@ -59,11 +63,12 @@ int* parse()
 }
 
 
+
 inline float getMagnitude(int row)
 {
 	float sum=0;
 	for(int j=0; j<cols; j++)
-		sum += datavector[row*cols + j] * datavector[row*cols + j];
+		sum += dataset[row*cols + j] * dataset[row*cols + j];
 	return sqrt(sum);
 }
 
@@ -78,7 +83,7 @@ inline float getCosineDist(int P1, int P2)
 {
   float dotprod = 0;
   for(int j=0; j<cols; j++)
-    dotprod += datavector[P1*cols + j]*datavector[P2*cols + j];
+    dotprod += dataset[P1*cols + j]*dataset[P2*cols + j];
 	
   return (1 - dotprod/(magnitudes[P1]*magnitudes[P2]));
 }
@@ -116,14 +121,12 @@ if(ok==idx) cout<<"Success binary read\n";
 void computeDistances()
 {
   int j, idx=0; 
-  for(int i=0; i< rows; i++){
+  for(int i=0; i< 1000; i++){
     for(j=0; j<i; j++) {
 	   matrix[idx++]=getCosineDist(i, j);
 	}
   }
   cout<<"Computed distances: "<<idx<<endl;
-
-  write_binary(idx);
 }
 
 float getDistance(int P1, int P2)
@@ -249,7 +252,6 @@ int main(int argc, char* argv[])
     clock_t t1 = clock();
 
 	parse();
-	parseBinMatrix((rows*(rows-1))/2);
     clock_t t2 = clock();
     double elapsed = double(t2-t1) / CLOCKS_PER_SEC;
     cout<<"Parse: "<<elapsed<<endl;
@@ -259,18 +261,21 @@ int main(int argc, char* argv[])
     elapsed = double(t3-t2) / CLOCKS_PER_SEC;
     cout<<"Magnitudes: "<<elapsed<<endl;
 
+	int idx = (rows*(rows-1))/2;
     computeDistances();
+	cout<<*min_element(matrix, matrix + idx)<<endl;
+	cout<<*max_element(matrix, matrix + idx)<<endl;
+	write_binary(idx);
     clock_t t4 = clock();
     elapsed = double(t4-t3) / CLOCKS_PER_SEC;
     cout<<"Distances: "<<elapsed<<endl;
 
-	write_binary((rows*(rows-1))/2);
-//	rows = rows1;
-//	hierarchical(64);
+	//parseBinMatrix(idx);
+	//rows = rows1;
+	//hierarchical(64);
     clock_t t5 = clock();
     elapsed = double(t5-t4) / CLOCKS_PER_SEC;
     cout<<"Algo: "<<elapsed<<endl;
-    //computeClusters();
 
 	return 0;
 }
