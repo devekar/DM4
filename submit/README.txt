@@ -29,7 +29,7 @@ First argument is the number of clusters, while the second argument takes values
 distance respectively.
 
 
-MAX-LINK:
+MAX-LINK/DBSCAN:
 1) Stage1_ParseDM.py is used to convert the CSV data matrix generated in DM Assignment into space-separated matrix.
    The matrix can be produced in the form of actual values or 1 and 0.
    Commands.:
@@ -60,6 +60,16 @@ MAX-LINK:
 	    ./Stage3 cosine.bin"
 		
 	Estimated time: 50 min
+
+
+   Stage3_DBSCAN.cpp generates clusters using DBSCAN algorithm.
+	Commands:
+		g++ -o Stage3 Stage3_DBSCAN.cpp	
+	    ./Stage3 <Distance-matrix from Stage 2>
+	For eg.
+	    ./Stage3 cosine.bin"
+	Estimated time: 5 min
+
 	
 4) Stage4_ComputeEntropy.py reads the output files from Stage 3 which can contain cluster information for different cluster numbers.
    Copy the output files from Stage 3 to an empty directory.
@@ -82,6 +92,7 @@ FILES:
 5) Stage1_ParseDM.py
 6) Stage2_DistanceMatrix.cpp
 7) Stage3_MaxLink.cpp
-8) Stage4_ComputeEntropy.py
+8) Stage3_DBSCAN.cpp
+9) Stage4_ComputeEntropy.py
 
  
